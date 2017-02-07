@@ -27,7 +27,8 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
        null 
 
     """
-	output_file = output_directory + channel_name+"_2013_"+str(startingMonth)+"_"+str(endingMonth)+"_output-parser-bins.csv"
+    current_year=2013
+	output_file = output_directory + channel_name+"_"+current_year+"_"+str(startingMonth)+"_"+str(endingMonth)+"_output-parser-bins.csv"
 	if not os.path.exists(os.path.dirname(output_file)):
 		try:
 			os.makedirs(os.path.dirname(output_file))
