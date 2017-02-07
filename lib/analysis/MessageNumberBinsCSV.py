@@ -28,7 +28,7 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 
     """
     current_year=2013
-	output_file = output_directory + channel_name+"_"+current_year+"_"+str(startingMonth)+"_"+str(endingMonth)+"_output-parser-bins.csv"
+   	output_file = output_directory + channel_name+"_"+current_year+"_"+str(startingMonth)+"_"+str(endingMonth)+"_output-parser-bins.csv"
 	if not os.path.exists(os.path.dirname(output_file)):
 		try:
 			os.makedirs(os.path.dirname(output_file))
@@ -39,10 +39,10 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 	ans = [ 0 for i in range(48)]
 
 	for folderiterator in range(startingMonth, endingMonth + 1):
-		temp1 = "0" if folderiterator < 10 else ""
+		prefix_month = "0" if folderiterator < 10 else ""
 		for fileiterator in range(startingDate if folderiterator == startingMonth else 1, endingDate + 1 if folderiterator == endingMonth else 32):
-			temp2 = "0" if fileiterator < 10 else ""
-			filePath=log_directory+temp1+str(folderiterator)+"/"+temp2+str(fileiterator)+"/"+channel_name+".txt"   
+			prefix_date = "0" if fileiterator < 10 else ""
+			filePath=log_directory+prefix_month+str(folderiterator)+"/"+prefix_date+str(fileiterator)+"/"+channel_name+".txt"   
 			if not os.path.exists(filePath):
 				if not((folderiterator==2 and (fileiterator ==29 or fileiterator ==30 or fileiterator ==31)) or ((folderiterator==4 or folderiterator==6 or folderiterator==9 or folderiterator==11) and fileiterator==31 )): 
 					print "[Error] Path "+filePath+" doesn't exist"
@@ -59,24 +59,21 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 			#code for getting all the nicknames in a list
 			for i in content:
 				if(i[0] != '=' and "] <" in i and "> " in i):
-					m = re.search(r"\<(.*?)\>", i)
-					if m.group(0) not in nicks:                       
+					nick_match_index = re.search(r"\<(.*?)\>", i)
+					if nick_match_index.group(0) not in nicks:                       
 						nicks.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
 
 			for i in xrange(0,len(nicks)):
-				nicks[i] = nicks[i][1:-1]     #removed <> from the nicknames
-					
-			for i in xrange(0,len(nicks)):
-				nicks[i]=ext.util.correctLastCharCR(nicks[i])
-
+				nicks[i] = ext.util.correctLastCharCR(nicks[i][1:-1])   #removed <> from the nicknames and corrected last char
+								
 			for line in content:
 				if(line[0]=='=' and "changed the topic of" not in line):
-					nick1=ext.util.correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-					nick2=ext.util.correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
-					if nick1 not in nicks:
-						nicks.append(nick1)
-					if nick2 not in nicks:
-						nicks.append(nick2)
+					original_nick=ext.util.correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:]) #Extracts initial nick
+					changed_nick=ext.util.correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:]) #Extracts changed nick
+					if original_nick not in nicks:
+						nicks.append(original_nick)
+					if changed_nick not in nicks:
+						nicks.append(changed_nick)
 			
 			for line in content:
 				if(line[0] != '='): 
@@ -87,9 +84,9 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 						bin_index=int(line[1:3])*2+1
 					flag_comma = 0
 					if(line[0] != '=' and "] <" in line and "> " in line):
-						m = re.search(r"\<(.*?)\>", line)
-						var = m.group(0)[1:-1]
-						var = ext.util.correctLastCharCR(var) 
+						nick_match_index = re.search(r"\<(.*?)\>", line)
+						nick_matched = nick_match_index.group(0)[1:-1]
+						nick_matched = ext.util.correctLastCharCR(nick_matched) 
 
 						for i in nicks:
 							rec_list=[e.strip() for e in line.split(':')]
@@ -102,7 +99,7 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 									rec_list[k] = ext.util.correctLastCharCR(rec_list[k])
 							for z in rec_list:
 								if(z==i):
-									if(var != i):  
+									if(nick_matched != i):  
 										bins[bin_index]=bins[bin_index]+1
 											
 							if "," in rec_list[1]: 
@@ -113,7 +110,7 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 										rec_list_2[x] = ext.util.correctLastCharCR(rec_list_2[x])
 								for j in rec_list_2:
 									if(j==i):
-										if(var != i):  
+										if(nick_matched != i):  
 											bins[bin_index]=bins[bin_index]+1
 						
 							if(flag_comma == 0):
@@ -121,7 +118,7 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 								rec=rec[1:]
 								rec = ext.util.correctLastCharCR(rec) 
 								if(rec==i):
-									if(var != i):
+									if(nick_matched != i):
 										bins[bin_index]=bins[bin_index]+1
 					
 			# print "Working on "+filePath
